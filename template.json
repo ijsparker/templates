@@ -1,0 +1,81 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "rgName": {
+          "type": "array"
+        },
+        "rgLocation": {
+            "type": "string"
+        },
+        "departmentNumber": {
+            "type": "string",
+            "metadata": {
+              "description": "Department chargeback code for billing"
+            }
+          },
+          "applicationName": {
+            "type": "array",
+            "metadata": {
+              "description": "What is the name of the Application"
+            }
+          },
+          "OwnerEmail": {
+            "type": "string",
+            "metadata": {
+              "description": "Who owns the resource"
+            }
+          },
+          "Environment": {
+            "allowedValues": [
+              "tst",
+              "dev",
+              "prd",
+              "snd",
+              "stg"
+            ],
+            "type": "array"
+          },
+          "Group": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          },
+          "Division": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          },
+          "locationCode": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[parameters('rgName')[copyIndex()]]",
+            "tags": {
+                "DepartmentNumber": "[parameters('departmentNumber')]",
+                "ApplicationName": "[parameters('applicationName')[copyIndex()]]",
+                "OwnerEmail": "[parameters('OwnerEmail')]",
+                "Environment": "[parameters('Environment')[copyIndex()]]",
+                "Group": "[parameters('Group')]",
+                "Division": "[parameters('Division')]",
+                "LocationCode": "[parameters('LocationCode')]"
+            },
+            "properties": {},
+            "copy": {
+              "name": "rgCopy",
+              "count": "[length(parameters('rgName'))]"
+            }
+        }
+    ],
+    "outputs": {}
+}

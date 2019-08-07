@@ -1,0 +1,157 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "rgName": {
+          "type": "array"
+        },
+        "rgLocation": {
+            "type": "string"
+        },
+        "principalId": {
+          "type": "string",
+          "metadata": {
+            "description": "The principal to assign the role to"
+          }
+        },
+        "builtInRoleType": {
+          "type": "string",
+          "allowedValues": [
+            "Owner",
+            "Contributor",
+            "Reader",
+            "owner",
+            "contributor",
+            "reader"
+          ],
+          "metadata": {
+            "description": "Built-in role to assign"
+          }
+        },
+        "roleNameGuid": {
+          "type": "string",
+          "metadata": {
+            "description": "A new GUID used to identify the role"
+          }      
+        },
+        "subscriptionId": {
+          "type": "string",
+          "defaultValue": "",
+          "metadata": {
+            "description": "Subscription ID value for deployment"
+          }
+        },    
+        "departmentNumber": {
+            "type": "string",
+            "metadata": {
+              "description": "Department chargeback code for billing"
+            }
+          },
+          "applicationName": {
+            "type": "array",
+            "metadata": {
+              "description": "What is the name of the Application"
+            }
+          },
+          "OwnerEmail": {
+            "type": "string",
+            "metadata": {
+              "description": "Who owns the resource"
+            }
+          },
+          "Environment": {
+            "allowedValues": [
+              "tst",
+              "dev",
+              "prd",
+              "snd"
+            ],
+            "type": "array"
+          },
+          "Group": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          },
+          "Division": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          },
+          "ResourceGroupName": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          },
+          "locationCode": {
+            "type": "string",
+            "metadata": {
+              "description": "Division High Level Qualifier"
+            }
+          }
+    },
+
+      "variables": {
+        "Owner": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+        "Contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "Reader": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+    },
+
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[parameters('rgName')[copyIndex()]]",
+            "tags": {
+                "DepartmentNumber": "[parameters('departmentNumber')]",
+                "ApplicationName": "[parameters('applicationName')[copyIndex()]]",
+                "OwnerEmail": "[parameters('OwnerEmail')]",
+                "Environment": "[parameters('Environment')[copyIndex()]]",
+                "Group": "[parameters('Group')]",
+                "Division": "[parameters('Division')]",
+                "LocationCode": "[parameters('LocationCode')]",
+                "guid": "[guid(parameters('roleNameGuid'))]"
+            },
+            "properties": {},
+            "copy": {
+              "name": "rgCopy",
+              "count": "[length(parameters('rgName'))]"
+            }
+        },
+        {
+          "apiVersion": "2018-05-01",
+          "name": "[concat('nestedTemplate-', parameters('rgName')[copyIndex()])]",
+          "type": "Microsoft.Resources/deployments",
+          "location": "[resourceGroup().location]",
+          "copy": {
+            "name": "rgrbac",
+            "count": "[length(parameters('rgName'))]"
+          },
+          "properties": {
+            "mode": "Incremental",
+            "template":{
+              "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.1",
+              "resources": [
+                  {
+                    "type": "Microsoft.Authorization/roleAssignments",
+                    "apiVersion": "2017-10-01-preview",
+                    "name": "[parameters('roleNameGuid')]",
+                    "properties": {
+                      "roleDefinitionId": "[variables(parameters('builtInRoleType'))]",
+                      "principalId": "[parameters('principalId')]",
+                      "scope": "[concat('/subscriptions/', subscription().subscriptionId, '/resourcegroups/', parameters('rgName')[copyIndex()])]"
+                    }
+                  }
+              ],
+              "outputs": {}
+            }
+          }
+       }
+    ],
+    "outputs": {}
+}
